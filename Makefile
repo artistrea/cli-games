@@ -2,8 +2,8 @@ CC:=gcc
 INCDIRS:=include
 OPT:=-O0
 DEBUG:=-g
-LIBS:=-lncurses -lpthread
-CFLAGS:=-Wall $(DEBUG) $(OPT) $(foreach D,$(INCDIRS),-I$(D)) -lpthread
+LIBS:=-lncurses
+CFLAGS:=-Wall $(DEBUG) $(OPT) $(foreach D,$(INCDIRS),-I$(D))
 
 
 ODIR=obj
