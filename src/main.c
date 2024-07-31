@@ -41,6 +41,7 @@ vec2_t* generate_food(vec2_t screen_size) {
 
 
 void append_to_snake(snake_t* snake) {
+  snake->size++;
   snake->tail->next = malloc(sizeof(snake_cell_t));
   snake->tail->next->next = NULL;
   snake->tail->next->previous = snake->tail;
