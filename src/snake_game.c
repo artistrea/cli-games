@@ -118,7 +118,7 @@ void setup_grid(
   }
 }
 
-int snake_game_play() {
+void snake_game_play() {
   int has_updated = 1;
   float before, after;
   // [TODO]: more consistent way of tracking dt
@@ -150,8 +150,6 @@ int snake_game_play() {
   } while(c != 'Q' && c != 'q');
 
   snake_game_teardown();
-
-  return 0;
 }
 
 vec2_t *food;
