@@ -110,6 +110,7 @@ void setup_grid(
   grid.cols = columns;
   grid.tiles = malloc(rows * sizeof(char*));
 
+  // TODO: check if possible to memset entire 2d array with single memset call
   for (int i = 0; i < rows; i++) {
     grid.tiles[i] = malloc(columns * sizeof(char));
     memset(grid.tiles[i], ' ', columns*sizeof(char));
