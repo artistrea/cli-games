@@ -85,7 +85,7 @@ void setup_snake(int begin_size, vec2_t begin_pos) {
   }
 
   snake->head = head;
-  snake->tail = last;
+  snake->tail = prev;
 }
 
 typedef struct {
@@ -161,7 +161,7 @@ void setup() {
   keypad(stdscr, TRUE);
   timeout(0);
   getmaxyx(stdscr, max_y, max_x);
-  setup_snake(5, (vec2_t){ max_x/2, max_y/2 });
+  setup_snake(1, (vec2_t){ max_x/2, max_y/2 });
   setup_grid(max_x, max_y);
   food = generate_food((vec2_t){.x=max_x, .y=max_y});
 }
@@ -269,8 +269,12 @@ int update_state(float dt) {
 
   previous_dir = dir;
   // mvprintw(0, 0, "tick = %d", (int)tick);
-
   move_snake(snake, dir);
+
+  if (check_snake_collision(snake)) {
+    game_over = 1;
+  }
+
 
   if (snake->head->position.x == food->x && snake->head->position.y == food->y) {
     append_to_snake(snake);
@@ -279,11 +283,6 @@ int update_state(float dt) {
     points++;
   }
 
-
-  if (check_snake_collision(snake)) {
-    game_over = 1;
-  }
-  
   return 1;
 }
 
