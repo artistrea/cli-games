@@ -1,29 +1,17 @@
 #include <string.h>
+#include <stdlib.h>
 #include <ncurses.h>
 #include <sys/types.h>
 #include "snake_game.h"
+#include "menu.h"
 
 
 void setup();
 void teardown();
 
-typedef struct {
-  char* label;
-  void (*invoke_on_select)(void);
-} option_t;
-
-typedef struct {
-  int currently_selected, size;
-  option_t options[];
-} options_menu_t;
-
 void opa();
 
-options_menu_t menu = {
-  .currently_selected=0,
-  .size=2,
-  .options={{.label="snake_game", .invoke_on_select=&snake_game_play},{.label="opa2", .invoke_on_select=&opa}}
-};
+menu_t *menu;
 
 void opa() {
   static int count=0;
@@ -45,24 +33,26 @@ int main() {
     }
 
     if (ch == 'w') {
-      menu.currently_selected++;
-      if (menu.currently_selected >= menu.size) {
-        menu.currently_selected = 0;
+      menu->hover_i++;
+      if (menu->hover_i >= menu->n_options) {
+        menu->hover_i = 0;
       }
     }
 
     if (ch == 'e') {
-      void (*func)(void) = menu.options[menu.currently_selected].invoke_on_select;
+      void (*func)(void) = menu->options[menu->hover_i].on_select;
       func();
     }
 
     if (ch == 'q') {
       break;
     }
+    void (*current_on_hover)(void) = menu->options[menu->hover_i].on_hover;
+    current_on_hover();
 
-    for (size_t i=0; i < menu.size; i++) {
-      if (menu.currently_selected == i) {
-        mvprintw(max_y2/2, (max_x2 - 10)/2, menu.options[i].label);
+    for (size_t i=0; i < menu->n_options; i++) {
+      if (menu->hover_i == i) {
+        mvprintw(max_y2/2, (max_x2 - 10)/2, menu->options[i].title);
       }
     }
 
@@ -79,11 +69,22 @@ int main() {
 }
 
 void setup() {
+  menu = malloc(sizeof(menu_t));
+
+  menu->hover_i=0,
+  menu->n_options=2,
+  menu->options=malloc(sizeof(menu_option_t) * menu->n_options);
+  menu->options[0] = snake_game_menu_option;
+  menu->options[1] =(menu_option_t){.title="opa2", .on_select=&opa, .on_hover=&opa};
+
   initscr();
+  start_color();
+
+  init_pair(1, COLOR_BLUE, COLOR_BLACK);
+  
   raw();
   noecho();
   keypad(stdscr, TRUE);
-  timeout(0);
   getmaxyx(stdscr, max_y2, max_x2);
 }
 

@@ -1,4 +1,5 @@
 #include "snake_game.h"
+#include "menu.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -141,7 +142,7 @@ void snake_game_play() {
 
   mvprintw(max_y/2, (max_x - 10)/2, "GAME OVER!");
   mvprintw(max_y/2 + 1, (max_x - 10)/2, "Score: %d", points);
-  mvprintw(0, 0, "Press 'Q' to exit.");
+  mvprintw(0, 0, "Press 'Q' to go back to the main menu.");
   refresh();
   char c;
   timeout(-1);
@@ -155,6 +156,9 @@ void snake_game_play() {
 vec2_t *food;
 
 void snake_game_setup() {
+  timeout(0);
+  game_over=0;
+  points=0;
   getmaxyx(stdscr, max_y, max_x);
   setup_snake(1, (vec2_t){ max_x/2, max_y/2 });
   setup_grid(max_x, max_y);
@@ -302,4 +306,31 @@ void snake_game_render() {
   refresh();
 }
 
+void snake_game_preview();
+
+menu_option_t snake_game_menu_option = {
+  .on_select=&snake_game_play,
+  .title="Snek",
+  .on_hover=&snake_game_preview,
+};
+
+void snake_game_preview() {
+  attron(COLOR_PAIR(1));
+  getmaxyx(stdscr, max_y, max_x);
+
+  for (int i=0;i<max_x;i++) {
+    for (int j=0;j<max_y;j++) {
+      mvaddch(j, i, ' ');
+    }
+  }
+
+  mvaddch(20, 30, 'f');
+  mvaddch(20, 31, 'o');
+  mvaddch(21, 31, 'o');
+  mvaddch(22, 31, 'o');
+  mvaddch(22, 32, 'o');
+  attroff(COLOR_PAIR(1));
+
+  refresh();
+}
 
