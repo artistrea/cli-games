@@ -121,19 +121,19 @@ void setup_grid(
 
 void snake_game_play() {
   int has_updated = 1;
-  float before, after;
+  float after, before;
   // [TODO]: more consistent way of tracking dt
   // this clock()/CLOCKS_PER_SEC fluctuates, sometimes a lot
   float dt;
-  after = ((float)clock())/CLOCKS_PER_SEC;
+  before = ((float)clock())/CLOCKS_PER_SEC;
   snake_game_setup();
 
   while (!game_over) {
-    before = ((float)clock())/CLOCKS_PER_SEC;
-    dt = before - after;
-    after = before;
+    after = ((float)clock())/CLOCKS_PER_SEC;
+    dt = after - before;
+    before = after;
     has_updated = snake_game_update_state(dt);
-    after = before;
+    before = after;
     if (has_updated) {
       snake_game_render();
       has_updated = 0;
