@@ -2,8 +2,10 @@ CC:=gcc
 INCDIRS:=include
 OPT:=-O0
 DEBUG:=-g
-LIBS:=-lncurses
+LIBS:=-lncurses -lpthread
 CFLAGS:=-Wall $(DEBUG) $(OPT) $(foreach D,$(INCDIRS),-I$(D))
+CLANG_INCLUDE_FLAGS = -I$(INCDIRS)
+CLANG = clang
 
 
 ODIR=obj
@@ -18,6 +20,11 @@ INCLUDES=$(foreach D,$(INCDIRS), $(shell find $(D) -type f -name "*"))
 BINARY=bin
 
 all: | $(ODIR) $(BINARY) 
+
+
+analyze:
+	$(CLANG) $(CLANG_INCLUDE_FLAGS) --analyze -Xanalyzer -analyzer-output=html src/**
+
 
 $(ODIR):
 	mkdir -p $@

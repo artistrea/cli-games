@@ -1,17 +1,22 @@
 #include "snake_game.h"
 #include "menu.h"
+#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ncurses.h>
 #include <sys/types.h>
 #include <time.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 int game_over=0;
 int points=0;
 
+sem_t snake_game_dt_sem;
+
 void snake_game_setup();
 void snake_game_teardown();
-int snake_game_update_state(float dt);
+int snake_game_update_state(int dt);
 void snake_game_render();
 
 typedef struct {
@@ -119,25 +124,45 @@ void setup_grid(
   }
 }
 
+void add_ms_to_timespec(struct timespec* t, int ms) {
+  t->tv_nsec += ms * 1000000;
+  if (t->tv_nsec >= 1000000000) {
+    t->tv_nsec -= 1000000000;
+    t->tv_sec++;
+  }
+}
+
+int ms_between_timespecs(struct timespec* t1, struct timespec* t2) {
+  return (t2->tv_sec - t1->tv_sec)
+    + 1.0e-9 * (t2->tv_nsec - t1->tv_nsec);
+}
+
 void snake_game_play() {
   int has_updated = 1;
   float after, before;
   // [TODO]: more consistent way of tracking dt
   // this clock()/CLOCKS_PER_SEC fluctuates, sometimes a lot
-  float dt;
+  int dt;
+
   before = ((float)clock())/CLOCKS_PER_SEC;
   snake_game_setup();
 
+  struct timespec t1, t2, next_tick;
+  timespec_get(&next_tick, TIME_UTC);
+  timespec_get(&t1, TIME_UTC);
+
   while (!game_over) {
-    after = ((float)clock())/CLOCKS_PER_SEC;
-    dt = after - before;
-    before = after;
+    timespec_get(&t2, TIME_UTC);
+    dt = ms_between_timespecs(&t1, &t2);
+
+    t1 = t2;
+    next_tick = t2;
+    add_ms_to_timespec(&next_tick, 66);
     has_updated = snake_game_update_state(dt);
     before = after;
-    if (has_updated) {
-      snake_game_render();
-      has_updated = 0;
-    }
+    snake_game_render();
+
+    sem_timedwait(&snake_game_dt_sem, &next_tick);
   }
 
   mvprintw(max_y/2, (max_x - 10)/2, "GAME OVER!");
@@ -224,7 +249,7 @@ int check_snake_collision(snake_t *snake) {
   return 0;
 }
 
-int snake_game_update_state(float dt) {
+int snake_game_update_state(int dt) {
   char ch;
   ch = getch();
 
@@ -254,17 +279,6 @@ int snake_game_update_state(float dt) {
       dir = RIGHT;
   }
 
-  static float tick=0;
-  static const float secs_per_tick = 0.1;
-
-  float next_tick = tick + dt/secs_per_tick;
-
-  if ((int)tick == (int)next_tick) {
-    tick = next_tick;
-    return 0;
-  }
-  tick = next_tick;
-
   previous_dir = dir;
   // mvprintw(0, 0, "tick = %d", (int)tick);
   move_snake(snake, dir);
@@ -272,7 +286,6 @@ int snake_game_update_state(float dt) {
   if (check_snake_collision(snake)) {
     game_over = 1;
   }
-
 
   if (snake->head->position.x == food->x && snake->head->position.y == food->y) {
     append_to_snake(snake);
@@ -291,13 +304,13 @@ void snake_game_render() {
     }
   }
 
-  mvaddch(food->y, food->x, 'f');
+  mvaddch(food->y, food->x, 'a');
 
   snake_cell_t *cell_to_render = snake->head;
 
-
   do {
     mvaddch(cell_to_render->position.y, cell_to_render->position.x, 'o');
+    if (cell_to_render->position.x > 400) cell_to_render->position.x = 0;
   } while ((cell_to_render = cell_to_render->next) != NULL);
 
   // mvprintw(0, 0, "size=%d,x=%d,y=%d", snake->size,snake->head->position.x, snake->head->position.y);
